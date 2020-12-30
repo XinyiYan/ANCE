@@ -607,7 +607,19 @@ def get_arguments():
         action="store_true",
         help="only do inference if specify",
     )
-
+    
+    parser.add_argument(
+        "--num_shards",
+        default=1,
+        type=int,
+        help="Total amount of data shards",
+    )
+    parser.add_argument(
+        "--shard_id",
+        default=0,
+        type=int,
+        help="Number(0-based) of data shard to process",
+    )
     args = parser.parse_args()
 
     return args
