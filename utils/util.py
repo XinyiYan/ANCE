@@ -131,9 +131,10 @@ def barrier_array_merge(
             args.world_size):  # TODO: dynamically find the max instead of HardCode
         pickle_path = os.path.join(
             args.output_dir,
-            "{1}_data_obj_{0}.pb".format(
+            "{1}_data_obj_{0}_{2}.pb".format(
                 str(i),
-                prefix))
+                prefix,
+                str(args.shard_id)))
         try:
             with open(pickle_path, 'rb') as handle:
                 b = pickle.load(handle)
