@@ -237,16 +237,26 @@ def generate_new_ann(
         latest_step_num):
     config, tokenizer, model = load_model(args, checkpoint_path)
 
-    logger.info("***** inference of dev query *****")
-    dev_query_collection_path = os.path.join(args.data_dir, "dev-query")
-    dev_query_cache = EmbeddingCache(dev_query_collection_path)
-    with dev_query_cache as emb:
-        dev_query_embedding, dev_query_embedding2id = StreamInferenceDoc(args, model, GetProcessingFn(
-            args, query=True), "dev_query_" + str(latest_step_num) + "_", emb, is_query_inference=True)
+    # logger.info("***** inference of dev query *****")
+    # dev_query_collection_path = os.path.join(args.data_dir, "dev-query")
+    # dev_query_cache = EmbeddingCache(dev_query_collection_path)
+    # with dev_query_cache as emb:
+    #     dev_query_embedding, dev_query_embedding2id = StreamInferenceDoc(args, model, GetProcessingFn(
+    #         args, query=True), "dev_query_" + str(latest_step_num) + "_", emb, is_query_inference=True)
 
     logger.info("***** inference of passages *****")
     passage_collection_path = os.path.join(args.data_dir, "passages")
+
     passage_cache = EmbeddingCache(passage_collection_path)
+
+    shard_size = int(len(passage_cache) / args.num_shards)
+    start_idx = args.shard_id * shard_size
+    end_idx = min(start_idx + shard_size, len(passage_cache))
+    passage_cache.change_range(start_idx, end_idx)
+    
+    logger.info('Producing encodings for passages range: %d to %d (out of total %d)',
+                start_idx, end_idx, len(passage_cache))
+    
     with passage_cache as emb:
         passage_embedding, passage_embedding2id = StreamInferenceDoc(args, model, GetProcessingFn(
             args, query=False), "passage_" + str(latest_step_num) + "_", emb, is_query_inference=False)

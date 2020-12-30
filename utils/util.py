@@ -106,9 +106,10 @@ def barrier_array_merge(
         dist.barrier()  # directory created
         pickle_path = os.path.join(
             args.output_dir,
-            "{1}_data_obj_{0}.pb".format(
+            "{1}_data_obj_{0}_{2}.pb".format(
                 str(rank),
-                prefix))
+                prefix,
+                str(args.shard_id)))
         with open(pickle_path, 'wb') as handle:
             pickle.dump(data_array, handle, protocol=4)
 
@@ -268,6 +269,8 @@ class EmbeddingCache:
         else:
             self.ix_array = np.arange(self.total_number)
         self.f = None
+        self.start_idx = 0
+        self.end_idx = self.total_number
 
     def open(self):
         self.f = open(self.base_path, 'rb')
@@ -297,13 +300,18 @@ class EmbeddingCache:
         return self.read_single_record()
 
     def __iter__(self):
-        self.f.seek(0)
-        for i in range(self.total_number):
+        self.f.seek(self.start_idx)
+        for i in range(self.start_idx, self.end_idx):
             new_ix = self.ix_array[i]
             yield self.__getitem__(new_ix)
 
     def __len__(self):
         return self.total_number
+
+    def change_range(self, start_idx, end_idx):
+        self.start_idx = start_idx
+        self.end_idx = end_idx
+        
 
 
 class StreamingDataset(IterableDataset):
